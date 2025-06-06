@@ -2,14 +2,12 @@
 use App\Models\Task;
 use App\Models\User;
 
-it('show a specific task', function () {
-    $task = Task::factory()->create();
+it('can show a task', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['user_id' => $user->id, 'name' => 'IDENTIDAD']);
 
-    $response = $this->get("/tasks/{$task->id}");
+    $response = $this->actingAs($user)->get(route('tasks.show', $task));
 
     $response->assertStatus(200);
-    $response->assertViewIs('tasks.show');
-    $response->assertViewHas('task', function ($viewTask) use ($task) {
-        return $viewTask->id === $task->id;
-    });
+    $response->assertSee('IDENTIDAD');
 });
