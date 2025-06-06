@@ -23,4 +23,16 @@ it('The aplication creates a user', function () {
         'name' => 'Test Task',
         'user_id' => $user->id,
     ]);
-});
+
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id,
+    ]);
+    $this->assertDatabaseHas('tasks', [
+        'name' => 'Test Task',
+        'user_id' => $user->id,
+    ]);
+    $this->assertCount(1, \App\Models\Task::all());
+    $this->assertCount(1, \App\Models\User::all());
+    $this->assertEquals('Test Task', \App\Models\Task::first()->name);
+
+});W
