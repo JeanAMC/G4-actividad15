@@ -35,4 +35,4 @@ it('The aplication creates a user', function () {
     $this->assertCount(1, \App\Models\User::all());
     $this->assertEquals('Test Task', \App\Models\Task::first()->name);
 
-});W
+});
