@@ -2,82 +2,93 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
 use App\Models\User;
+use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class TaskController extends Controller
 {
+   public function index(Request $request)
+{
+    $query = Task::with('user');
     
-    public function index()
-    {
+    if ($request->has('user_id') && $request->user_id) {
+        $query->where('user_id', $request->user_id);
+    }
     
-        $tasks = Task::with('user')->where(function ($query) {
-            if ($userId = request('user_id')) {
-                $query->where('user_id', $userId);
-            }
-        })->get(); 
-        
-        return view('tasks.index', [
-            'tasks' => $tasks,
-            'users' => User::all(), 
-        ]);
-    }
-
-    public function create()
-    {
-      
-        return view('tasks.create', [
-            'users' => User::all(), 
-        ]);
-    }
+    $tasks = $query->get();
+    
+    return view('tasks.index', compact('tasks'));
+}
 
     public function store(Request $request)
-    {
-      
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'user_id' => 'required|exists:users,id', 
-        ]);
-        $task = new Task();
-        $task->name = $request->name;
-        $task->user_id = $request->user_id; 
-        $task->save();
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'user_id' => 'required|exists:users,id', 
+    ]);
 
-        return redirect()->route('tasks.index');
+    Task::create([
+        'name' => $request->name,
+        'user_id' => $request->user_id, 
+    ]);
+
+    return redirect()->route('tasks.index');
+}
+
+
+//PRUEBA
+public function create()
+    {
+        $users = User::all();
+        
+        return view('tasks.create', compact('users'));
     }
 
-    public function show(Task $task)
+
+
+
+    public function show(Task $task): View
     {
-       
         return view('tasks.show', compact('task'));
     }
 
-    public function edit(Task $task)
-    {
-     
-        return view('tasks.edit', [
-            'task' => $task,
-            'users' => User::all(), 
-        ]);
-    }
+   public function edit(Task $task)
+{
+    $users = \App\Models\User::all();
+    
+    return view('tasks.edit', compact('task', 'users'));
+}
 
-    public function update(Request $request, Task $task)
+    public function update(Request $request, Task $task): RedirectResponse
     {
-       
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
-        $task->name = $request->name;
-        $task->save();
-   
-        return redirect()->route('tasks.index');
+
+        $task->update($validated);
+
+        return redirect()->route('tasks.index')
+                        ->with('success', 'Tarea actualizada exitosamente.');
     }
 
-    public function destroy(Task $task)
+    public function destroy(Task $task): RedirectResponse
     {
-       
         $task->delete();
-        return redirect()->route('tasks.index');
+
+        return redirect()->route('tasks.index')
+                        ->with('success', 'Tarea eliminada exitosamente.');
+    }
+
+    public function toggleCompleted(Task $task): RedirectResponse
+    {
+        $task->toggleCompleted();
+
+        $message = $task->completed ? 'Tarea marcada como completada.' : 'Tarea marcada como pendiente.';
+
+        return redirect()->route('tasks.index')
+                        ->with('success', $message);
     }
 }
