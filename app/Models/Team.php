@@ -13,18 +13,19 @@ class Team extends Model
 
     protected $guarded = [];
     
-    public function add($users)
-    {
-
+public function add($users)
+{
+    if ($users instanceof User) {
         $this->guardAgainstTooManyMembers();
-
-        if ($users instanceof User) {
-            return $this->users()->save($users);
-        }
-
-        $this->users()->saveMany($users);
+        return $this->users()->save($users);
     }
 
+    foreach ($users as $user) {
+        $this->guardAgainstTooManyMembers();
+        $this->users()->save($user);
+
+    }
+}
     public function users()
     {
         return $this->hasMany(User::class);
@@ -33,7 +34,7 @@ class Team extends Model
     protected function guardAgainstTooManyMembers()
     {
         if ($this->users()->count() >= $this->size) {
-            throw new Exception();
+            throw new Exception('No se pueden agregar más usuarios: el equipo ya está completo.');
         }
     }
 }
